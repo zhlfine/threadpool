@@ -23,15 +23,15 @@ public class ThreadPool<T> {
 	private Set<Worker> workers = new HashSet<Worker>();
 	
 	public ThreadPool(ObjectHandler<T> handler, int maxThread){
-		this("ThreadPool"+(poolIndex++), handler, maxThread, 60000);
+		this(""+(poolIndex++), handler, maxThread, 30000);
 	}
 	
 	public ThreadPool(ObjectHandler<T> handler, int maxThread, long keepAliveTime){
-		this("ThreadPool"+(poolIndex++), handler, maxThread, keepAliveTime);
+		this(""+(poolIndex++), handler, maxThread, keepAliveTime);
 	}
 	
 	public ThreadPool(String name, ObjectHandler<T> handler, int maxThread){
-		this(name, handler, maxThread, 60000);
+		this(name, handler, maxThread, 30000);
 	}
 	
 	public ThreadPool(String name, ObjectHandler<T> handler, int maxThread, long keepAliveTime){
@@ -39,11 +39,21 @@ public class ThreadPool<T> {
 	}
 	
 	public ThreadPool(String name, ObjectHandler<T> handler, int maxThread, long keepAliveTime, BlockingQueue<T> queue){
-		this.name = name;
+		this.name = "ThreadPool-"+name;
 		this.handler = handler;
 		this.maxThread = maxThread;
 		this.keepAliveTime = keepAliveTime;
 		this.queue = queue;
+	}
+	
+	public int getQueueSize(){
+		return queue.size();
+	}
+	
+	public int getThreadCount(){
+		synchronized(workers){
+			return workers.size();
+		}
 	}
 	
 	public void execute(T object){
@@ -54,7 +64,7 @@ public class ThreadPool<T> {
 	private void tryCreatingThread(){
 		if(queue.peek() != null){
 			synchronized(workers){
-				if(workers.size() < maxThread){
+				if(queue.peek() != null && workers.size() < maxThread){
 					String threadName = name+"-"+(workerIndex++);
 					logger.info("Creating new worker thread {}", threadName);
 					Worker worker = new Worker(threadName);
@@ -78,7 +88,7 @@ public class ThreadPool<T> {
 			while(!stop){
 				T object = null;
 				try{
-					object = queue.poll(waitingUnit, TimeUnit.SECONDS);
+					object = queue.poll(waitingUnit, TimeUnit.MILLISECONDS);
 				}catch(InterruptedException e){
 					continue;
 				}
