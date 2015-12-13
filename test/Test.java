@@ -3,7 +3,6 @@
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cn.zhl.threadpool.ObjectHandler;
 import cn.zhl.threadpool.ThreadPool;
 
 public class Test {
@@ -24,7 +23,7 @@ public class Test {
 		
 	}
 	
-	public static class TaskHandler implements ObjectHandler<Task> {
+	public static class TaskHandler implements ThreadPool.ObjectHandler<Task> {
 
 		public void handle(Task object) {
 			logger.debug("task {} started", object.toString());

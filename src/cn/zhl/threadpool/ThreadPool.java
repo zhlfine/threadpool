@@ -19,7 +19,7 @@ public class ThreadPool<T> {
 	private BlockingQueue<T> queue;
 	
 	private static long poolIndex = 0;
-	private static long workerIndex = 0;
+	private long workerIndex = 0;
 	private Set<Worker> workers = new HashSet<Worker>();
 	
 	public ThreadPool(ObjectHandler<T> handler, int maxThread){
@@ -116,6 +116,12 @@ public class ThreadPool<T> {
 			}
 			logger.info("worker thread {} stopped", Thread.currentThread().getName());
 		}
+	}
+	
+	public static interface ObjectHandler<T> {
+
+		void handle(T object);
+		
 	}
 	
 }
