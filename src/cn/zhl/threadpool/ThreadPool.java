@@ -22,6 +22,8 @@ public class ThreadPool<T> {
 	private long workerIndex = 0;
 	private Set<Worker> workers = new HashSet<Worker>();
 	
+	private int threadFactor = 10;
+	
 	public ThreadPool(ObjectHandler<T> handler, int maxThread){
 		this(""+(poolIndex++), handler, maxThread, 30000);
 	}
@@ -46,31 +48,21 @@ public class ThreadPool<T> {
 		this.queue = queue;
 	}
 	
-	public int getQueueSize(){
-		return queue.size();
-	}
-	
-	public int getThreadCount(){
-		synchronized(workers){
-			return workers.size();
-		}
-	}
-	
 	public void execute(T object){
 		queue.offer(object);
-		tryCreatingThread();
+		createThread();
 	}
 	
-	private void tryCreatingThread(){
-		if(queue.peek() != null){
-			synchronized(workers){
-				if(queue.peek() != null && workers.size() < maxThread){
-					String threadName = name+"-"+(workerIndex++);
-					logger.info("Creating new worker thread {}", threadName);
-					Worker worker = new Worker(threadName);
-					worker.start();
-					workers.add(worker);
-				}
+	private void createThread(){
+		synchronized(workers){
+			int workerNumber = workers.size();
+			int queueSize = queue.size();
+			if(queueSize > workerNumber * threadFactor && workerNumber < maxThread){
+				String threadName = name+"-"+(workerIndex++);
+				logger.info("Creating new worker thread {}", threadName);
+				Worker worker = new Worker(threadName);
+				worker.start();
+				workers.add(worker);
 			}
 		}
 	}
@@ -101,8 +93,6 @@ public class ThreadPool<T> {
 					}
 				}else{
 					waitingTime = 0;
-					tryCreatingThread();
-					
 					try{
 						handler.handle(object);
 					}catch(Exception e){
